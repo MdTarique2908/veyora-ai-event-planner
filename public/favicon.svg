@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="vyNavy" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e2b45" />
+      <stop offset="100%" stop-color="#172033" />
+    </linearGradient>
+    <linearGradient id="vyGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff8e8" />
+      <stop offset="35%" stop-color="#e8d4a8" />
+      <stop offset="100%" stop-color="#c5a869" />
+    </linearGradient>
+    <linearGradient id="vyGoldSec" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e8d4a8" stop-opacity="0.85" />
+      <stop offset="100%" stop-color="#b39352" stop-opacity="0.6" />
+    </linearGradient>
+  </defs>
+  <!-- Midnight Navy Rounded Squircle -->
+  <rect width="64" height="64" rx="16" fill="url(#vyNavy)" stroke="#e8d4a8" stroke-width="1.5" stroke-opacity="0.35" />
+
+  <!-- Subtle ambient gold glow behind star -->
+  <circle cx="32" cy="32" r="16" fill="#e8d4a8" opacity="0.15" />
+
+  <!-- Diagonal 4-Point Star (Secondary facet, rotated 45 deg) -->
+  <path d="M 32,18 C 32,27 27,32 18,32 C 27,32 32,37 32,46 C 32,37 37,32 46,32 C 37,32 32,27 32,18 Z"
+        fill="url(#vyGoldSec)"
+        transform="rotate(45 32 32)" />
+
+  <!-- Primary 4-Point Star (North-South-East-West) -->
+  <path d="M 32,10 C 32,23 23,32 10,32 C 23,32 32,41 32,54 C 32,41 41,32 54,32 C 41,32 32,23 32,10 Z"
+        fill="url(#vyGold)" />
+
+  <!-- Center Diamond Sparkle Core -->
+  <polygon points="32,27 37,32 32,37 27,32" fill="#ffffff" opacity="0.95" />
+</svg>
