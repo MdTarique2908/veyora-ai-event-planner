@@ -21,6 +21,7 @@ import {
   Wand2,
 } from 'lucide-react';
 import { EventPlan, EventThemeTrack } from '../types/event';
+import { MusicStudioVisual3D } from './Luxury3DVisuals';
 
 interface ThemeMusicStudioProps {
   plan: EventPlan;
@@ -65,6 +66,7 @@ export const ThemeMusicStudio: React.FC<ThemeMusicStudioProps> = ({
   // Audio Playback States
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [autoplayBlocked, setAutoplayBlocked] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(0.85);
@@ -153,15 +155,26 @@ export const ThemeMusicStudio: React.FC<ThemeMusicStudioProps> = ({
     const handleEnded = () => {
       if (!isLooping) setIsPlaying(false);
     };
+    const handlePlay = () => {
+      setIsPlaying(true);
+      setAutoplayBlocked(false);
+    };
+    const handlePause = () => {
+      setIsPlaying(false);
+    };
 
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('loadedmetadata', handleLoadedMetadata);
     audio.addEventListener('ended', handleEnded);
+    audio.addEventListener('play', handlePlay);
+    audio.addEventListener('pause', handlePause);
 
     return () => {
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
       audio.removeEventListener('ended', handleEnded);
+      audio.removeEventListener('play', handlePlay);
+      audio.removeEventListener('pause', handlePause);
     };
   }, [isLooping]);
 
@@ -233,7 +246,16 @@ export const ThemeMusicStudio: React.FC<ThemeMusicStudioProps> = ({
       audio.pause();
       setIsPlaying(false);
     } else {
-      audio.play().then(() => setIsPlaying(true)).catch((e) => console.error('Audio play error:', e));
+      audio
+        .play()
+        .then(() => {
+          setIsPlaying(true);
+          setAutoplayBlocked(false);
+        })
+        .catch((e) => {
+          console.error('Audio play error:', e);
+          setAutoplayBlocked(true);
+        });
     }
   };
 
@@ -274,6 +296,7 @@ export const ThemeMusicStudio: React.FC<ThemeMusicStudioProps> = ({
     setIsComposing(true);
     setErrorNotice(null);
     setSuccessNotice(null);
+    setAutoplayBlocked(false);
 
     try {
       const payload = {
@@ -322,10 +345,19 @@ export const ThemeMusicStudio: React.FC<ThemeMusicStudioProps> = ({
         });
 
         setActiveTrack(newTrack);
-        setIsPlaying(true);
         if (audioRef.current) {
           audioRef.current.src = newTrack.audioUrl;
-          audioRef.current.play().catch(() => {});
+          audioRef.current
+            .play()
+            .then(() => {
+              setIsPlaying(true);
+              setAutoplayBlocked(false);
+            })
+            .catch((playErr) => {
+              console.warn('Autoplay prevented by browser:', playErr);
+              setIsPlaying(false);
+              setAutoplayBlocked(true);
+            });
         }
 
         setSuccessNotice(
@@ -380,10 +412,20 @@ export const ThemeMusicStudio: React.FC<ThemeMusicStudioProps> = ({
   // Select track from playlist
   const handleSelectTrack = (track: EventThemeTrack) => {
     setActiveTrack(track);
-    setIsPlaying(true);
+    setAutoplayBlocked(false);
     if (audioRef.current) {
       audioRef.current.src = track.audioUrl;
-      audioRef.current.play().catch(() => {});
+      audioRef.current
+        .play()
+        .then(() => {
+          setIsPlaying(true);
+          setAutoplayBlocked(false);
+        })
+        .catch((err) => {
+          console.warn('Playback prevented:', err);
+          setIsPlaying(false);
+          setAutoplayBlocked(true);
+        });
     }
   };
 
@@ -404,39 +446,48 @@ export const ThemeMusicStudio: React.FC<ThemeMusicStudioProps> = ({
         preload="auto"
       />
 
-      {/* Header Banner */}
-      <div className="relative overflow-hidden rounded-3xl border border-stone-200/90 bg-white p-6 md:p-8 shadow-xs">
-        <div className="absolute -right-10 -top-10 h-64 w-64 rounded-full bg-indigo-500/5 blur-3xl pointer-events-none" />
-        <div className="absolute -left-10 -bottom-10 h-64 w-64 rounded-full bg-cyan-500/5 blur-3xl pointer-events-none" />
+      {/* Luxury 3D Theme Music Header Banner */}
+      <div className="relative overflow-hidden rounded-3xl border border-[#D6B779]/35 bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0F172A] p-6 sm:p-8 shadow-2xl text-[#F8FAFC]">
+        <div className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-[#D6B779]/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-indigo-500/10 blur-3xl" />
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
-              <Music className="h-3.5 w-3.5 text-indigo-600" />
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          <div className="lg:col-span-8 space-y-3">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#D6B779]/40 bg-[#D6B779]/10 px-3.5 py-1 text-xs font-semibold text-[#D6B779]">
+              <Music className="h-3.5 w-3.5 text-[#D6B779]" />
               <span>Google DeepMind Lyria Realtime Audio</span>
-              <span className="rounded bg-indigo-600 px-1.5 py-0.5 text-[10px] font-medium text-white">
-                models/lyria-realtime-exp
+              <span className="rounded bg-[#D6B779] px-1.5 py-0.5 text-[10px] font-bold text-[#0F172A]">
+                48kHz Stereo
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#F8FAFC]">
               Custom Event Theme Music & Fanfare
             </h1>
-            <p className="text-sm text-slate-600 max-w-2xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
               Compose bespoke background soundscapes, grand entrance brass fanfares, and celebration dance tracks
-              tailored to <strong className="text-slate-900 font-semibold">{plan.concept.title}</strong>. Complete with
+              tailored to <strong className="text-[#D6B779] font-semibold">{plan.concept.title}</strong>. Complete with
               DJ audio style guides and uncompressed 48kHz WAV audio export.
             </p>
+
+            {/* Quick Stats Pill */}
+            <div className="pt-2 flex items-center gap-3">
+              <div className="rounded-xl border border-[#334155] bg-[#0F172A]/70 px-4 py-2 text-center min-w-[100px]">
+                <div className="text-lg font-bold text-[#D6B779]">{savedTracks.length}</div>
+                <div className="text-[10px] font-medium text-slate-400">Themes Composed</div>
+              </div>
+              <div className="rounded-xl border border-[#334155] bg-[#0F172A]/70 px-4 py-2 text-center min-w-[100px]">
+                <div className="text-lg font-bold text-emerald-400">{bpm} BPM</div>
+                <div className="text-[10px] font-medium text-slate-400">Current Tempo</div>
+              </div>
+            </div>
           </div>
 
-          {/* Quick Counter */}
-          <div className="flex items-center gap-3 self-start md:self-auto shrink-0">
-            <div className="rounded-2xl border border-stone-200 bg-stone-50/80 px-4 py-3 text-center min-w-[90px]">
-              <div className="text-xl font-bold text-slate-900">{savedTracks.length}</div>
-              <div className="text-[11px] font-medium text-slate-500">Tracks Composed</div>
-            </div>
-            <div className="rounded-2xl border border-stone-200 bg-stone-50/80 px-4 py-3 text-center min-w-[90px]">
-              <div className="text-xl font-bold text-indigo-700">{bpm}</div>
-              <div className="text-[11px] font-medium text-slate-500">BPM Tempo</div>
+          <div className="lg:col-span-4 flex items-center justify-center">
+            <div className="relative w-full rounded-2xl border border-[#334155]/60 bg-[#0F172A]/50 backdrop-blur-xs p-1 shadow-inner">
+              <MusicStudioVisual3D isPlaying={isPlaying} />
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[9px] text-slate-400 font-mono tracking-widest uppercase bg-[#0F172A]/90 px-2.5 py-0.5 rounded-full border border-[#334155]/60 pointer-events-none">
+                {isPlaying ? '▶ Realtime 3D Audio' : '3D Soundwave Studio'}
+              </div>
             </div>
           </div>
         </div>
@@ -651,11 +702,48 @@ export const ThemeMusicStudio: React.FC<ThemeMusicStudioProps> = ({
                 )}
               </div>
 
+              {/* Autoplay Blocked Notification & Recovery Control */}
+              {autoplayBlocked && activeTrack && (
+                <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 shadow-2xs">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-xl bg-amber-100 p-2 text-amber-800 shrink-0">
+                      <Volume2 className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-amber-950">Audio Ready — Browser Autoplay Blocked</p>
+                      <p className="text-[11px] text-amber-800">Browser policy requires direct user interaction to play audio.</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (audioRef.current) {
+                        audioRef.current
+                          .play()
+                          .then(() => {
+                            setIsPlaying(true);
+                            setAutoplayBlocked(false);
+                          })
+                          .catch((e) => console.error('Play click error:', e));
+                      }
+                    }}
+                    className="inline-flex items-center gap-2 rounded-xl bg-amber-600 hover:bg-amber-700 px-4 py-2 text-xs font-bold text-white shadow-xs transition-all active:scale-95 cursor-pointer shrink-0"
+                  >
+                    <Play className="h-3.5 w-3.5 fill-white" />
+                    <span>Click to Play Generated Song</span>
+                  </button>
+                </div>
+              )}
+
               {/* Animated Canvas Visualizer */}
               <div className="my-6 flex flex-col items-center justify-center p-4 rounded-2xl bg-slate-950 border border-stone-800">
                 <canvas ref={canvasRef} className="w-full max-w-md h-24" />
                 <div className="mt-2 text-[11px] text-slate-400 font-mono">
-                  {isPlaying ? '48kHz Uncompressed Stereo Stream' : 'Press Play to Listen'}
+                  {isPlaying
+                    ? '48kHz Uncompressed Stereo Stream'
+                    : autoplayBlocked
+                      ? 'Audio ready — click play to listen'
+                      : 'Press Play to Listen'}
                 </div>
               </div>
             </div>

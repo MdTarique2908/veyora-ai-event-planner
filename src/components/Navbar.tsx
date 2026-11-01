@@ -35,16 +35,26 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
         {/* Brand */}
         <div
+          role="button"
+          tabIndex={0}
+          aria-label="Veyora Home - Go to Dashboard"
           onClick={() => setActiveTab('dashboard')}
-          className="flex cursor-pointer items-center gap-3 transition-opacity hover:opacity-90"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              setActiveTab('dashboard');
+            }
+          }}
+          className="flex cursor-pointer items-center gap-3 transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#E8D4A8] rounded-xl p-1"
         >
           <VeyoraLogo size="md" showWordmark={true} showTagline={true} />
         </div>
 
         {/* Navigation Tabs */}
-        <nav className="flex items-center gap-1 sm:gap-1.5 bg-stone-100/70 p-1 rounded-xl border border-stone-200/60">
+        <nav aria-label="Main Navigation" className="flex items-center gap-1 sm:gap-1.5 bg-stone-100/70 p-1 rounded-xl border border-stone-200/60">
           <button
             onClick={() => setActiveTab('dashboard')}
+            aria-current={activeTab === 'dashboard' ? 'page' : undefined}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all ${
               activeTab === 'dashboard'
                 ? 'bg-white text-slate-900 shadow-sm border border-stone-200/80 font-semibold'
@@ -57,6 +67,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <button
             onClick={() => setActiveTab('create')}
+            aria-current={activeTab === 'create' ? 'page' : undefined}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all ${
               activeTab === 'create'
                 ? 'bg-[#172033] dark:bg-[#E8D4A8] text-[#E8D4A8] dark:text-[#172033] shadow-sm shadow-[#172033]/25 font-semibold border border-[#E8D4A8]/40'
@@ -70,6 +81,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {hasActivePlan && (
             <button
               onClick={() => setActiveTab('plan')}
+              aria-current={activeTab === 'plan' ? 'page' : undefined}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all ${
                 activeTab === 'plan'
                   ? 'bg-white text-slate-900 shadow-sm border border-stone-200/80 font-semibold'
@@ -83,6 +95,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <button
             onClick={() => setActiveTab('saved')}
+            aria-current={activeTab === 'saved' ? 'page' : undefined}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all ${
               activeTab === 'saved'
                 ? 'bg-white text-slate-900 shadow-sm border border-stone-200/80 font-semibold'

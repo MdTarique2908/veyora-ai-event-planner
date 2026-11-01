@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Clock, Plus, Trash2, Edit2, Check, User, ArrowRight } from 'lucide-react';
 import { EventPlan, ScheduleItem } from '../types/event';
+import { TimelineScheduleVisual3D } from './Luxury3DVisuals';
 
 interface DayOfScheduleProps {
   plan: EventPlan;
@@ -83,27 +84,50 @@ export const DayOfSchedule: React.FC<DayOfScheduleProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-stone-200/90 bg-white p-6 shadow-xs">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-700">
-            <Clock className="h-4 w-4 text-indigo-600" />
-            <span>Master Run of Show</span>
-          </div>
-          <h3 className="mt-1 text-xl font-bold text-slate-900">
-            Day-of Timeline & Schedule
-          </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Coordinate vendors, greeters, speeches, catering, and send-off cues hour by hour.
-          </p>
-        </div>
+      {/* Luxury 3D Run of Show & Analytics Header */}
+      <div className="relative overflow-hidden rounded-3xl border border-[#D6B779]/35 bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0F172A] p-6 sm:p-8 shadow-2xl text-[#F8FAFC]">
+        <div className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-[#D6B779]/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-purple-500/10 blur-3xl" />
 
-        <button
-          onClick={() => setIsAdding(true)}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-indigo-700 transition-colors shrink-0 cursor-pointer"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          <span>Add Milestone</span>
-        </button>
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          <div className="lg:col-span-8 space-y-3">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#D6B779]/40 bg-[#D6B779]/10 px-3.5 py-1 text-xs font-semibold text-[#D6B779]">
+              <Clock className="h-3.5 w-3.5 text-[#D6B779]" />
+              <span>Master Run of Show & Timeline Engine</span>
+            </div>
+            <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#F8FAFC]">
+              Day-of Timeline & Schedule
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
+              Coordinate vendors, greeters, speeches, catering, and send-off cues hour by hour with precision timeline sequencing.
+            </p>
+
+            <div className="pt-2 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setIsAdding(true)}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#D6B779] to-[#C5A25D] px-4 py-2 text-xs font-bold text-[#0F172A] shadow-md shadow-[#D6B779]/20 hover:scale-[1.02] active:scale-98 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-[#D6B779] focus:outline-none"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>Add Milestone</span>
+              </button>
+
+              <div className="rounded-xl border border-[#334155] bg-[#0F172A]/70 px-3.5 py-2 text-center">
+                <span className="text-xs font-mono font-bold text-[#D6B779]">{schedule.length}</span>
+                <span className="text-[11px] text-slate-400 ml-1.5">Scheduled Cues</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:col-span-4 flex items-center justify-center">
+            <div className="relative w-full rounded-2xl border border-[#334155]/60 bg-[#0F172A]/50 backdrop-blur-xs p-1 shadow-inner">
+              <TimelineScheduleVisual3D />
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[9px] text-slate-400 font-mono tracking-widest uppercase bg-[#0F172A]/90 px-2.5 py-0.5 rounded-full border border-[#334155]/60 pointer-events-none">
+                3D Chronological Ring
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Add Milestone Drawer */}

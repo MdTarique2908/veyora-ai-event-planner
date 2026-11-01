@@ -24,6 +24,7 @@ import {
   Video,
 } from 'lucide-react';
 import { EventPlan, EventVideoInvite, InspirationItem } from '../types/event';
+import { FloatingInvitationCard3D } from './Luxury3DVisuals';
 
 interface VideoInvitationStudioProps {
   plan: EventPlan;
@@ -655,37 +656,46 @@ RSVP today!`;
 
   return (
     <div className="space-y-6">
-      {/* Header Banner */}
-      <div className="relative overflow-hidden rounded-3xl border border-stone-200/90 bg-white p-6 md:p-8 shadow-xs">
-        <div className="absolute -right-12 -top-12 h-64 w-64 rounded-full bg-indigo-500/5 blur-3xl pointer-events-none" />
-        <div className="absolute -left-12 -bottom-12 h-64 w-64 rounded-full bg-rose-500/5 blur-3xl pointer-events-none" />
+      {/* Luxury 3D Animated Event Teaser & Video Invites Header */}
+      <div className="relative overflow-hidden rounded-3xl border border-[#D6B779]/35 bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0F172A] p-6 sm:p-8 shadow-2xl text-[#F8FAFC]">
+        <div className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-[#D6B779]/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-rose-500/10 blur-3xl" />
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
-              <Film className="h-3.5 w-3.5 text-indigo-600" />
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          <div className="lg:col-span-8 space-y-3">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#D6B779]/40 bg-[#D6B779]/10 px-3.5 py-1 text-xs font-semibold text-[#D6B779]">
+              <Film className="h-3.5 w-3.5 text-[#D6B779]" />
               <span>Gemini Omni Flash 1.1 Video Engine</span>
-              <span className="rounded bg-indigo-600 px-1.5 py-0.5 text-[10px] font-medium text-white">Interactions API</span>
+              <span className="rounded bg-[#D6B779] px-1.5 py-0.5 text-[10px] font-bold text-[#0F172A]">Interactions API</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#F8FAFC]">
               Animated Event Teaser & Video Invites
             </h1>
-            <p className="text-sm text-slate-600 max-w-2xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
               Upload a venue or moodboard photo, craft cinematic prompts, and generate high-impact motion teasers in{' '}
-              <strong className="text-slate-900 font-semibold">16:9 widescreen</strong> or{' '}
-              <strong className="text-slate-900 font-semibold">9:16 vertical stories/reels</strong>.
+              <strong className="text-[#D6B779] font-semibold">16:9 widescreen</strong> or{' '}
+              <strong className="text-[#D6B779] font-semibold">9:16 vertical stories/reels</strong>.
             </p>
+
+            {/* Quick Stats */}
+            <div className="pt-2 flex items-center gap-3">
+              <div className="rounded-xl border border-[#334155] bg-[#0F172A]/70 px-4 py-2 text-center min-w-[100px]">
+                <div className="text-lg font-bold text-[#D6B779]">{savedVideos.length}</div>
+                <div className="text-[10px] font-medium text-slate-400">Teasers Saved</div>
+              </div>
+              <div className="rounded-xl border border-[#334155] bg-[#0F172A]/70 px-4 py-2 text-center min-w-[100px]">
+                <div className="text-lg font-bold text-rose-400">{aspectRatio}</div>
+                <div className="text-[10px] font-medium text-slate-400">Active Format</div>
+              </div>
+            </div>
           </div>
 
-          {/* Quick Stats */}
-          <div className="flex items-center gap-3 self-start md:self-auto shrink-0">
-            <div className="rounded-2xl border border-stone-200 bg-stone-50/80 px-4 py-3 text-center min-w-[90px]">
-              <div className="text-xl font-bold text-slate-900">{savedVideos.length}</div>
-              <div className="text-[11px] font-medium text-slate-500">Teasers Saved</div>
-            </div>
-            <div className="rounded-2xl border border-stone-200 bg-stone-50/80 px-4 py-3 text-center min-w-[90px]">
-              <div className="text-xl font-bold text-indigo-700">{aspectRatio}</div>
-              <div className="text-[11px] font-medium text-slate-500">Active Format</div>
+          <div className="lg:col-span-4 flex items-center justify-center">
+            <div className="relative w-full rounded-2xl border border-[#334155]/60 bg-[#0F172A]/50 backdrop-blur-xs p-1 shadow-inner">
+              <FloatingInvitationCard3D />
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[9px] text-slate-400 font-mono tracking-widest uppercase bg-[#0F172A]/90 px-2.5 py-0.5 rounded-full border border-[#334155]/60 pointer-events-none">
+                3D Floating Invitation
+              </div>
             </div>
           </div>
         </div>

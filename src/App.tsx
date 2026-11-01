@@ -223,6 +223,27 @@ export default function App() {
     window.print();
   };
 
+  // Navigate from dashboard directly to a specific feature subtab
+  const handleNavigateFromDashboard = (
+    subTab: 'overview' | 'budget' | 'timeline' | 'schedule' | 'vendors' | 'seating' | 'video' | 'music' | 'inspiration' | 'experience'
+  ) => {
+    if (activePlan || savedPlans.length > 0) {
+      const planToOpen = activePlan || savedPlans[0];
+      setActivePlan(planToOpen);
+      storageHelper.setActivePlanId(planToOpen.id);
+      setActiveTab('plan');
+      setPlanSubTab(subTab);
+    } else {
+      const sample = SAMPLE_PLANS[0];
+      storageHelper.savePlan(sample);
+      setSavedPlans(storageHelper.getSavedPlans());
+      setActivePlan(sample);
+      storageHelper.setActivePlanId(sample.id);
+      setActiveTab('plan');
+      setPlanSubTab(subTab);
+    }
+  };
+
   // Check if active plan has budget warning
   const totalEstimatedCost = activePlan?.budgetPlan?.items.reduce(
     (sum, item) => sum + (Number(item.estimatedCost) || 0),
@@ -236,7 +257,11 @@ export default function App() {
     <div className="min-h-screen bg-[#faf9f6] text-slate-900 dark:bg-[#0b0f19] dark:text-slate-100 flex flex-col font-sans transition-colors duration-200">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 rounded-2xl border border-stone-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 px-4 py-2.5 text-xs font-semibold text-slate-800 dark:text-slate-100 shadow-xl backdrop-blur-md transition-all">
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 rounded-2xl border border-stone-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 px-4 py-2.5 text-xs font-semibold text-slate-800 dark:text-slate-100 shadow-xl backdrop-blur-md transition-all"
+        >
           {toastMessage}
         </div>
       )}
@@ -275,6 +300,7 @@ export default function App() {
             onExportJson={handleExportJson}
             onImportJson={handleImportJson}
             onLoadSample={handleLoadSample}
+            onNavigateToFeature={handleNavigateFromDashboard}
           />
         )}
 

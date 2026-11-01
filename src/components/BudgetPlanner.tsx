@@ -42,6 +42,7 @@ import {
   Legend as RechartsLegend,
 } from 'recharts';
 import { BudgetItem, EventPlan } from '../types/event';
+import { BudgetFinancialVisual3D } from './Luxury3DVisuals';
 import { useTheme } from '../context/ThemeContext';
 
 interface BudgetPlannerProps {
@@ -90,6 +91,13 @@ export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({
   const baseCurrency = plan.budgetPlan.currency || 'USD';
   const [viewCurrency, setViewCurrency] = useState<string>(baseCurrency);
 
+  // Supported rate verification
+  const isBaseSupported = Boolean(EXCHANGE_RATES[baseCurrency] && EXCHANGE_RATES[baseCurrency].rateToUSD > 0);
+  const isViewSupported = Boolean(EXCHANGE_RATES[viewCurrency] && EXCHANGE_RATES[viewCurrency].rateToUSD > 0);
+  const canConvert = isBaseSupported && isViewSupported;
+  const isConverted = viewCurrency !== baseCurrency && canConvert;
+  const isUnsupportedConversionAttempt = viewCurrency !== baseCurrency && !canConvert;
+
   // Keep in sync if plan's base currency updates externally
   useEffect(() => {
     if (!EXCHANGE_RATES[viewCurrency]) {
@@ -97,17 +105,23 @@ export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({
     }
   }, [baseCurrency]);
 
-  const baseRate = EXCHANGE_RATES[baseCurrency]?.rateToUSD ?? 1.0;
-  const targetRate = EXCHANGE_RATES[viewCurrency]?.rateToUSD ?? 1.0;
-  const fxMultiplier = targetRate / baseRate;
-  const isConverted = viewCurrency !== baseCurrency;
+  // Compute FX multiplier only when conversion is legitimately supported
+  let fxMultiplier = 1.0;
+  if (canConvert && viewCurrency !== baseCurrency) {
+    const baseRate = EXCHANGE_RATES[baseCurrency].rateToUSD;
+    const targetRate = EXCHANGE_RATES[viewCurrency].rateToUSD;
+    fxMultiplier = targetRate / (baseRate > 0 ? baseRate : 1.0);
+  }
 
   // Active currency symbol/code for all visual displays
-  const currency = viewCurrency;
+  const currency = isConverted ? viewCurrency : baseCurrency;
 
-  // Convert raw value into current view currency
+  // Convert raw value into current view currency safely; never silently approximate unsupported currencies
   const convertCost = (val: number | string | undefined): number => {
     if (val === undefined || val === null || val === '') return 0;
+    if (!canConvert) {
+      return Math.round(Number(val));
+    }
     return Math.round(Number(val) * fxMultiplier);
   };
 
@@ -424,7 +438,7 @@ export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({
 
   // Convert and set the active view currency as the plan's new base currency
   const handleSetAsBaseCurrency = () => {
-    if (!isConverted) return;
+    if (!isConverted || !canConvert) return;
     const updatedItems = plan.budgetPlan.items.map((it) => ({
       ...it,
       estimatedCost: Math.round(Number(it.estimatedCost) * fxMultiplier),
@@ -488,6 +502,59 @@ export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({
         </div>
       )}
 
+      {/* Luxury 3D Capital & Budget Header Banner */}
+      <div className="relative overflow-hidden rounded-3xl border border-[#D6B779]/35 bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0F172A] p-6 sm:p-8 shadow-2xl text-[#F8FAFC]">
+        <div className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-[#D6B779]/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-emerald-500/10 blur-3xl" />
+
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          <div className="lg:col-span-8 space-y-3">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#D6B779]/40 bg-[#D6B779]/10 px-3.5 py-1 text-xs font-semibold text-[#D6B779]">
+              <DollarSign className="h-3.5 w-3.5 text-[#D6B779]" />
+              <span>Intelligent Capital Allocation & Multi-Currency Engine</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#F8FAFC]">
+              Event Capital & Budget Allocator
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+              Track itemized expenses, cashflow disbursement milestones, and real-time global currency conversions with AI reallocation guardrails.
+            </p>
+
+            <div className="pt-2 flex flex-wrap items-center gap-3">
+              <div className="rounded-xl border border-[#334155] bg-[#0F172A]/70 px-4 py-2 text-center min-w-[120px]">
+                <div className="text-lg font-bold font-mono text-emerald-400">
+                  {currency} {totalBudget.toLocaleString()}
+                </div>
+                <div className="text-[10px] font-medium text-slate-400">Target Budget</div>
+              </div>
+              <div className="rounded-xl border border-[#334155] bg-[#0F172A]/70 px-4 py-2 text-center min-w-[120px]">
+                <div className={`text-lg font-bold font-mono ${isOverBudget ? 'text-rose-400' : 'text-[#D6B779]'}`}>
+                  {currency} {totalEstimated.toLocaleString()}
+                </div>
+                <div className="text-[10px] font-medium text-slate-400">Allocated Cost</div>
+              </div>
+              <div className="rounded-xl border border-[#334155] bg-[#0F172A]/70 px-4 py-2 text-center min-w-[120px]">
+                <div className={`text-lg font-bold font-mono ${remaining >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {currency} {Math.abs(remaining).toLocaleString()}
+                </div>
+                <div className="text-[10px] font-medium text-slate-400">
+                  {remaining >= 0 ? 'Surplus Reserve' : 'Variance Overrun'}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:col-span-4 flex items-center justify-center">
+            <div className="relative w-full rounded-2xl border border-[#334155]/60 bg-[#0F172A]/50 backdrop-blur-xs p-1 shadow-inner">
+              <BudgetFinancialVisual3D />
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[9px] text-slate-400 font-mono tracking-widest uppercase bg-[#0F172A]/90 px-2.5 py-0.5 rounded-full border border-[#334155]/60 pointer-events-none">
+                3D Financial Vault
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Global Currency Converter Toolbar */}
       <div className="rounded-2xl border border-stone-200/90 bg-white p-4 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -507,12 +574,21 @@ export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({
                     Converted View
                   </span>
                 )}
+                {!isBaseSupported && (
+                  <span className="rounded-md bg-amber-100 border border-amber-300 px-2 py-0.5 text-[10px] font-semibold text-amber-900">
+                    Native Rate Only
+                  </span>
+                )}
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
                 Convert all budget items, charts, and variances dynamically.
                 {isConverted ? (
                   <span className="text-amber-800 ml-1.5 font-medium">
-                    (1 {baseCurrency} = {(targetRate / baseRate).toFixed(4)} {viewCurrency})
+                    (1 {baseCurrency} = {fxMultiplier.toFixed(4)} {viewCurrency})
+                  </span>
+                ) : !isBaseSupported ? (
+                  <span className="text-amber-700 ml-1.5 font-medium">
+                    Plan Base: {baseCurrency} (Live conversion disabled to protect accuracy)
                   </span>
                 ) : (
                   <span className="text-slate-500 ml-1.5">
@@ -535,12 +611,17 @@ export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({
                     key={code}
                     type="button"
                     onClick={() => setViewCurrency(code)}
-                    className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer ${
+                    disabled={!isBaseSupported}
+                    className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
                       isSelected
                         ? 'bg-white text-indigo-700 shadow-2xs border border-stone-200/80 font-bold'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-stone-100'
                     }`}
-                    title={info ? `${info.name} (${info.symbol})` : code}
+                    title={
+                      !isBaseSupported
+                        ? `Currency conversion disabled for unsupported base currency ${baseCurrency}`
+                        : info ? `${info.name} (${info.symbol})` : code
+                    }
                   >
                     <span>{info?.flag}</span>
                     <span className="font-mono">{code}</span>
@@ -556,6 +637,11 @@ export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({
               onChange={(e) => setViewCurrency(e.target.value)}
               className="rounded-xl border border-stone-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 focus:outline-none shadow-2xs cursor-pointer"
             >
+              {!isBaseSupported && (
+                <option value={baseCurrency}>
+                  🌐 {baseCurrency} (Original — Unsupported FX)
+                </option>
+              )}
               {Object.values(EXCHANGE_RATES).map((curr) => (
                 <option key={curr.code} value={curr.code}>
                   {curr.flag} {curr.code} ({curr.symbol}) — {curr.name}
@@ -577,7 +663,7 @@ export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({
             )}
 
             {/* Commit / Save as Base Currency Button */}
-            {isConverted && (
+            {isConverted && canConvert && (
               <button
                 type="button"
                 onClick={handleSetAsBaseCurrency}
@@ -591,6 +677,19 @@ export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Clear Warning for Unsupported Currency */}
+      {(!isBaseSupported || isUnsupportedConversionAttempt) && (
+        <div className="flex items-center gap-2.5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 shadow-xs">
+          <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
+          <div>
+            <p className="font-semibold">Live currency conversion is disabled for &quot;{baseCurrency}&quot;</p>
+            <p className="text-[11px] text-amber-700 mt-0.5">
+              To protect financial accuracy, Veyora does not approximate exchange rates for unsupported or unlisted currencies. All figures are presented in their exact original values without conversion.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -1509,7 +1608,7 @@ export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({
                 <td colSpan={2} className="pt-4 pl-4 text-[11px] text-slate-500 italic">
                   {isConverted ? (
                     <span className="text-amber-800 font-medium">
-                      Converted at mock FX rate (1 {baseCurrency} = {(targetRate / baseRate).toFixed(4)} {viewCurrency})
+                      Converted at live FX rate (1 {baseCurrency} = {fxMultiplier.toFixed(4)} {viewCurrency})
                     </span>
                   ) : (
                     <span>Estimates benchmarked for {plan.input.city}</span>

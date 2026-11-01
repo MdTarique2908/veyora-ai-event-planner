@@ -28,6 +28,7 @@ import {
   Cloud,
 } from 'lucide-react';
 import { EventPlan } from '../types/event';
+import { EventPlanningVisual3D } from './Luxury3DVisuals';
 import {
   generateEventPlanIcs,
   downloadIcsFile,
@@ -121,19 +122,23 @@ export const PlanOverview: React.FC<PlanOverviewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Hero Header Card */}
-      <div className="relative overflow-hidden rounded-2xl border border-stone-200/90 bg-white p-6 sm:p-8 shadow-xs">
-        <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-          <div className="max-w-2xl">
+      {/* Hero Header Card with Luxury 3D Visualizer */}
+      <div className="relative overflow-hidden rounded-3xl border border-[#D6B779]/35 bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0F172A] p-6 sm:p-8 shadow-2xl text-[#F8FAFC]">
+        {/* Ambient atmospheric glows */}
+        <div className="pointer-events-none absolute -top-24 -left-24 h-80 w-80 rounded-full bg-[#D6B779]/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-[#38BDF8]/10 blur-3xl" />
+
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          <div className="lg:col-span-8 space-y-4">
             {/* Metadata line */}
-            <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500">
-              <span className="capitalize text-[#8C6D2C] dark:text-[#E8D4A8] font-semibold bg-[#FAF6ED] dark:bg-[#1E2B45] px-2.5 py-0.5 rounded-md border border-[#E8D4A8]/50">
+            <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-300">
+              <span className="capitalize text-[#D6B779] font-semibold bg-[#D6B779]/15 px-2.5 py-0.5 rounded-md border border-[#D6B779]/30">
                 {plan.input.eventType}
               </span>
-              <span aria-hidden="true">·</span>
-              <span className="font-semibold text-slate-700">{plan.input.city}</span>
-              <span aria-hidden="true">·</span>
-              <span className="text-slate-500 font-medium">
+              <span aria-hidden="true" className="text-slate-500">·</span>
+              <span className="font-semibold text-slate-200">{plan.input.city}</span>
+              <span aria-hidden="true" className="text-slate-500">·</span>
+              <span className="text-[#D6B779] font-medium">
                 {diffDays > 0
                   ? `${diffDays} days away`
                   : diffDays === 0
@@ -142,43 +147,43 @@ export const PlanOverview: React.FC<PlanOverviewProps> = ({
               </span>
             </div>
 
-            <h1 className="mt-2.5 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
-              {plan.concept.title}
-            </h1>
-            <p className="mt-1 text-sm sm:text-base font-semibold text-indigo-700">
-              "{plan.concept.tagline}"
-            </p>
-            <p className="mt-2.5 text-xs sm:text-sm text-slate-600 leading-relaxed">
-              {plan.concept.description}
-            </p>
+            <div>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#F8FAFC]">
+                {plan.concept.title}
+              </h1>
+              <p className="mt-1 text-sm sm:text-base font-semibold bg-gradient-to-r from-[#D6B779] to-[#F3E5C8] bg-clip-text text-transparent">
+                "{plan.concept.tagline}"
+              </p>
+              <p className="mt-2 text-xs sm:text-sm text-slate-300 leading-relaxed max-w-2xl">
+                {plan.concept.description}
+              </p>
+            </div>
 
             {/* Vibe Keywords */}
-            <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-              <span className="font-semibold text-slate-800">Atmosphere Vibe:</span>
+            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+              <span className="font-semibold text-slate-300">Atmosphere Vibe:</span>
               {plan.concept.vibeKeywords.map((vibe, idx) => (
                 <React.Fragment key={vibe}>
-                  <span className="text-slate-700 font-medium bg-stone-100 px-2 py-0.5 rounded-md border border-stone-200">
+                  <span className="text-[#D6B779] font-medium bg-[#0F172A]/80 px-2 py-0.5 rounded-md border border-[#334155]">
                     {vibe}
                   </span>
                   {idx < plan.concept.vibeKeywords.length - 1 && (
-                    <span className="text-slate-300" aria-hidden="true">
+                    <span className="text-slate-600" aria-hidden="true">
                       /
                     </span>
                   )}
                 </React.Fragment>
               ))}
             </div>
-          </div>
 
-          {/* Action Group: Export Calendar & Regenerate Plan */}
-          <div className="flex flex-col items-start lg:items-end gap-3 shrink-0">
-            <div className="flex flex-wrap items-center gap-2">
+            {/* Action Group: Export Calendar & Regenerate Plan */}
+            <div className="pt-2 flex flex-wrap items-center gap-3">
               <button
                 type="button"
                 onClick={() => setShowCalendarModal(true)}
-                className="inline-flex items-center gap-2 rounded-xl border border-stone-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-stone-50 hover:text-slate-900 transition-all shadow-2xs cursor-pointer"
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#D6B779] to-[#C5A25D] px-4 py-2 text-xs font-bold text-[#0F172A] hover:shadow-md hover:shadow-[#D6B779]/20 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-[#D6B779] focus:outline-none"
               >
-                <CalendarPlus className="h-3.5 w-3.5 text-indigo-600" />
+                <CalendarPlus className="h-3.5 w-3.5 text-[#0F172A]" />
                 <span>Export to Calendar</span>
               </button>
 
@@ -186,23 +191,30 @@ export const PlanOverview: React.FC<PlanOverviewProps> = ({
                 type="button"
                 onClick={onRegenerate}
                 disabled={isRegenerating}
-                className="inline-flex items-center gap-2 rounded-xl border border-stone-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-stone-50 hover:text-slate-900 transition-all disabled:opacity-50 shadow-2xs cursor-pointer"
+                className="inline-flex items-center gap-2 rounded-xl border border-[#334155] bg-[#1E293B]/80 hover:bg-[#1E293B] px-4 py-2 text-xs font-semibold text-[#F8FAFC] hover:border-[#D6B779]/40 transition-all disabled:opacity-50 cursor-pointer focus-visible:ring-2 focus-visible:ring-[#D6B779] focus:outline-none"
               >
                 <RefreshCw
-                  className={`h-3.5 w-3.5 ${isRegenerating ? 'animate-spin text-indigo-600' : ''}`}
+                  className={`h-3.5 w-3.5 ${isRegenerating ? 'animate-spin text-[#D6B779]' : 'text-slate-400'}`}
                 />
                 <span>{isRegenerating ? 'Regenerating...' : 'Regenerate Plan'}</span>
               </button>
-            </div>
 
-            <span className="text-[11px] text-slate-400">
-              Generated {new Date(plan.generatedAt).toLocaleDateString()}
-            </span>
+              <span className="text-[11px] text-slate-400 font-mono">
+                Generated {new Date(plan.generatedAt).toLocaleDateString()}
+              </span>
+            </div>
+          </div>
+
+          {/* Right Column: 3D Stage & Decor Centerpiece */}
+          <div className="lg:col-span-4 flex items-center justify-center">
+            <div className="relative w-full rounded-2xl border border-[#334155]/60 bg-[#0F172A]/50 backdrop-blur-xs p-2 shadow-inner">
+              <EventPlanningVisual3D />
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[9px] text-slate-400 font-mono tracking-widest uppercase bg-[#0F172A]/90 px-2.5 py-0.5 rounded-full border border-[#334155]/60 pointer-events-none">
+                3D Stage & Decor
+              </div>
+            </div>
           </div>
         </div>
-
-        {/* Ambient Subtle Accent */}
-        <div className="pointer-events-none absolute -bottom-12 -right-12 h-64 w-64 rounded-full bg-indigo-50/60 blur-3xl" />
       </div>
 
       {/* Quick Metrics Bar */}

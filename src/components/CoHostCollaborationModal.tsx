@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Users,
   Share2,
@@ -48,6 +48,73 @@ export const CoHostCollaborationModal: React.FC<CoHostCollaborationModalProps> =
   onUpdatePlan,
   onToast,
 }) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+  const previousActiveElementRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // Save previous active element for focus restoration upon close
+    previousActiveElementRef.current = document.activeElement as HTMLElement;
+
+    // Focus first focusable element inside modal
+    const focusTimer = setTimeout(() => {
+      if (modalRef.current) {
+        const focusables = modalRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        const visibleFocusables = (Array.from(focusables) as HTMLElement[]).filter((el) => el.offsetParent !== null);
+        if (visibleFocusables.length > 0) {
+          visibleFocusables[0].focus();
+        }
+      }
+    }, 20);
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+
+      if (e.key === 'Tab' && modalRef.current) {
+        const focusables = modalRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        const visibleFocusables = (Array.from(focusables) as HTMLElement[]).filter((el) => el.offsetParent !== null);
+
+        if (visibleFocusables.length === 0) {
+          e.preventDefault();
+          return;
+        }
+
+        const firstElement = visibleFocusables[0];
+        const lastElement = visibleFocusables[visibleFocusables.length - 1];
+
+        if (e.shiftKey) {
+          if (document.activeElement === firstElement || !modalRef.current.contains(document.activeElement)) {
+            e.preventDefault();
+            lastElement.focus();
+          }
+        } else {
+          if (document.activeElement === lastElement || !modalRef.current.contains(document.activeElement)) {
+            e.preventDefault();
+            firstElement.focus();
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      clearTimeout(focusTimer);
+      window.removeEventListener('keydown', handleKeyDown);
+      if (previousActiveElementRef.current && typeof previousActiveElementRef.current.focus === 'function') {
+        previousActiveElementRef.current.focus();
+      }
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const [activeTab, setActiveTab] = useState<'invite' | 'auth' | 'activity' | 'devices'>('invite');
@@ -211,8 +278,14 @@ export const CoHostCollaborationModal: React.FC<CoHostCollaborationModalProps> =
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="collab-modal-title"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs"
+    >
       <div
+        ref={modalRef}
         className="w-full max-w-2xl rounded-3xl border border-stone-200/90 bg-white shadow-2xl overflow-hidden flex flex-col max-h-[92vh]"
         onClick={(e) => e.stopPropagation()}
       >
@@ -224,7 +297,7 @@ export const CoHostCollaborationModal: React.FC<CoHostCollaborationModalProps> =
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-slate-900">Cloud Sync & Co-Host Collaboration</h3>
+                <h3 id="collab-modal-title" className="text-base font-bold text-slate-900">Cloud Sync & Co-Host Collaboration</h3>
                 <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-semibold text-emerald-800 flex items-center gap-1">
                   <Cloud className="h-2.5 w-2.5" />
                   <span>Realtime Sync</span>

@@ -58,6 +58,7 @@ export const SeatingPlanner3D: React.FC<SeatingPlanner3DProps> = ({ plan, onUpda
   const [isControlDockOpen, setIsControlDockOpen] = useState(true);
   const [cameraMode, setCameraMode] = useState<'perspective' | 'top' | 'stage' | 'walkthrough'>('perspective');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [webGlError, setWebGlError] = useState<string | null>(null);
 
   // Show transient notification
   const triggerToast = (msg: string) => {
@@ -121,10 +122,17 @@ export const SeatingPlanner3D: React.FC<SeatingPlanner3DProps> = ({ plan, onUpda
     cameraRef.current = camera;
 
     // Studio Renderer with ACES ToneMapping & Soft Shadows
-    const renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      powerPreference: 'high-performance',
-    });
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        powerPreference: 'high-performance',
+      });
+    } catch (e: any) {
+      console.warn('WebGL initialization failed:', e);
+      setWebGlError('WebGL 3D visualizer is not supported in this environment. Table metrics, capacities, and layout settings remain fully accessible.');
+      return;
+    }
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -177,8 +185,8 @@ export const SeatingPlanner3D: React.FC<SeatingPlanner3DProps> = ({ plan, onUpda
     scene.add(floor);
     floorMeshRef.current = floor;
 
-    // Floor Grid Overlay for positioning reference
-    const grid = new THREE.GridHelper(28, 28, 0x6366f1, 0x1e293b);
+    // Floor Grid Overlay for positioning reference with luxury champagne gold accents
+    const grid = new THREE.GridHelper(28, 28, 0xd6b779, 0x334155);
     grid.position.y = 0.002;
     (grid.material as THREE.Material).opacity = 0.35;
     (grid.material as THREE.Material).transparent = true;
@@ -808,30 +816,30 @@ export const SeatingPlanner3D: React.FC<SeatingPlanner3DProps> = ({ plan, onUpda
   };
 
   return (
-    <div className="relative w-full h-[760px] sm:h-[820px] rounded-3xl overflow-hidden border border-stone-200/90 bg-slate-950 shadow-sm flex flex-col select-none">
+    <div className="relative w-full h-[760px] sm:h-[820px] rounded-3xl overflow-hidden border border-[#D6B779]/35 bg-[#0F172A] shadow-2xl flex flex-col select-none text-[#F8FAFC]">
       {/* Toast Alert */}
       {toastMessage && (
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 rounded-2xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-xl border border-indigo-400/40 animate-fade-in">
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 rounded-2xl bg-[#D6B779] px-4 py-2 text-xs font-bold text-[#0F172A] shadow-xl border border-[#F3E5C8]/50 animate-fade-in">
           {toastMessage}
         </div>
       )}
 
-      {/* TOP STATUS BAR: Real-time Seating & Capacity Tracker */}
-      <div className="ui-dock z-30 flex flex-wrap items-center justify-between gap-3 border-b border-stone-200/90 bg-white/95 px-4 py-3 backdrop-blur-md text-slate-900">
+      {/* TOP STATUS BAR: Real-time Seating & Capacity Tracker (Luxury 3D Theme) */}
+      <div className="ui-dock z-30 flex flex-wrap items-center justify-between gap-3 border-b border-[#334155]/80 bg-[#1E293B]/95 px-5 py-3.5 backdrop-blur-md text-[#F8FAFC]">
         <div className="flex items-center gap-3">
-          <div className="rounded-xl bg-indigo-50 p-2 text-indigo-700 border border-indigo-100">
-            <Compass className="h-5 w-5 text-indigo-600" />
+          <div className="rounded-xl bg-[#D6B779]/15 p-2 text-[#D6B779] border border-[#D6B779]/30">
+            <Compass className="h-5 w-5 text-[#D6B779]" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+              <span className="text-xs font-bold text-[#F8FAFC] uppercase tracking-wider">
                 3D Venue & Seating Studio
               </span>
-              <span className="rounded-md bg-indigo-50 px-2 py-0.5 text-[10px] font-mono text-indigo-700 border border-indigo-100 font-semibold">
-                Three.js PBR Engine
+              <span className="rounded-md bg-[#D6B779]/15 px-2 py-0.5 text-[10px] font-mono text-[#D6B779] border border-[#D6B779]/30 font-semibold">
+                Three.js Spatial Engine
               </span>
             </div>
-            <p className="text-[11px] text-slate-500">
+            <p className="text-[11px] text-slate-400">
               Interactive physical arrangement for {plan.concept.title} ({plan.input.city})
             </p>
           </div>
@@ -841,8 +849,8 @@ export const SeatingPlanner3D: React.FC<SeatingPlanner3DProps> = ({ plan, onUpda
         <div className="flex items-center gap-4 text-xs">
           <div className="hidden sm:flex flex-col items-end">
             <div className="flex items-center gap-1.5 font-bold tabular-nums">
-              <Users className="h-3.5 w-3.5 text-indigo-600" />
-              <span className={seatingDiff === 0 ? 'text-emerald-700' : seatingDiff > 0 ? 'text-indigo-700' : 'text-amber-700'}>
+              <Users className="h-3.5 w-3.5 text-[#D6B779]" />
+              <span className={seatingDiff === 0 ? 'text-emerald-400' : seatingDiff > 0 ? 'text-[#D6B779]' : 'text-amber-400'}>
                 {totalSeated} / {targetGuests} Guests Seated
               </span>
               <span className="text-slate-400 text-[11px] font-normal">
@@ -850,14 +858,14 @@ export const SeatingPlanner3D: React.FC<SeatingPlanner3DProps> = ({ plan, onUpda
               </span>
             </div>
 
-            <div className="w-36 h-1.5 rounded-full bg-stone-100 border border-stone-200/60 mt-1 overflow-hidden">
+            <div className="w-36 h-1.5 rounded-full bg-[#0F172A] border border-[#334155]/60 mt-1 overflow-hidden">
               <div
                 className={`h-full transition-all duration-300 ${
                   seatingDiff === 0
-                    ? 'bg-emerald-600'
+                    ? 'bg-emerald-400'
                     : seatingDiff > 0
-                    ? 'bg-indigo-600'
-                    : 'bg-amber-600'
+                    ? 'bg-gradient-to-r from-[#D6B779] to-[#E8D4A8]'
+                    : 'bg-amber-400'
                 }`}
                 style={{ width: `${Math.min(100, (totalSeated / (targetGuests || 1)) * 100)}%` }}
               />
@@ -868,7 +876,7 @@ export const SeatingPlanner3D: React.FC<SeatingPlanner3DProps> = ({ plan, onUpda
           <button
             type="button"
             onClick={handleSaveLayout}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-indigo-700 transition-all shadow-2xs active:scale-98 cursor-pointer"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#D6B779] to-[#C5A25D] px-4 py-2 text-xs font-bold text-[#0F172A] shadow-md shadow-[#D6B779]/20 hover:scale-[1.02] active:scale-98 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-[#D6B779] focus:outline-none"
           >
             <Save className="h-3.5 w-3.5" />
             <span>Save Blueprint</span>
@@ -880,13 +888,23 @@ export const SeatingPlanner3D: React.FC<SeatingPlanner3DProps> = ({ plan, onUpda
       <div className="relative flex-1 w-full h-full cursor-grab active:cursor-grabbing">
         <div ref={mountRef} className="w-full h-full" />
 
+        {webGlError && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#0F172A]/90 p-6 text-center text-white backdrop-blur-xs">
+            <AlertCircle className="h-10 w-10 text-amber-400 mb-3" />
+            <h4 className="text-base font-bold">3D Visualizer Mode</h4>
+            <p className="mt-1 max-w-md text-xs text-slate-300">
+              {webGlError}
+            </p>
+          </div>
+        )}
+
         {/* CAMERA PRESET FLOATING STRIP */}
-        <div className="ui-dock absolute top-4 left-4 z-20 flex items-center gap-1.5 rounded-xl border border-stone-200 bg-white/95 p-1.5 shadow-md backdrop-blur-md">
+        <div className="ui-dock absolute top-4 left-4 z-20 flex items-center gap-1.5 rounded-2xl border border-[#334155] bg-[#1E293B]/90 p-1.5 shadow-xl backdrop-blur-md">
           <button
             type="button"
             onClick={() => handleSetCameraView('perspective')}
-            className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer ${
-              cameraMode === 'perspective' ? 'bg-indigo-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900 hover:bg-stone-50'
+            className={`rounded-xl px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer ${
+              cameraMode === 'perspective' ? 'bg-gradient-to-r from-[#D6B779] to-[#C5A25D] text-[#0F172A] font-bold shadow-xs' : 'text-slate-300 hover:text-[#F8FAFC] hover:bg-[#0F172A]'
             }`}
           >
             Perspective 45°
@@ -894,8 +912,8 @@ export const SeatingPlanner3D: React.FC<SeatingPlanner3DProps> = ({ plan, onUpda
           <button
             type="button"
             onClick={() => handleSetCameraView('top')}
-            className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer ${
-              cameraMode === 'top' ? 'bg-indigo-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900 hover:bg-stone-50'
+            className={`rounded-xl px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer ${
+              cameraMode === 'top' ? 'bg-gradient-to-r from-[#D6B779] to-[#C5A25D] text-[#0F172A] font-bold shadow-xs' : 'text-slate-300 hover:text-[#F8FAFC] hover:bg-[#0F172A]'
             }`}
           >
             Top-Down 2D
@@ -903,8 +921,8 @@ export const SeatingPlanner3D: React.FC<SeatingPlanner3DProps> = ({ plan, onUpda
           <button
             type="button"
             onClick={() => handleSetCameraView('stage')}
-            className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer ${
-              cameraMode === 'stage' ? 'bg-indigo-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900 hover:bg-stone-50'
+            className={`rounded-xl px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer ${
+              cameraMode === 'stage' ? 'bg-gradient-to-r from-[#D6B779] to-[#C5A25D] text-[#0F172A] font-bold shadow-xs' : 'text-slate-300 hover:text-[#F8FAFC] hover:bg-[#0F172A]'
             }`}
           >
             Stage View
@@ -912,8 +930,8 @@ export const SeatingPlanner3D: React.FC<SeatingPlanner3DProps> = ({ plan, onUpda
           <button
             type="button"
             onClick={() => handleSetCameraView('walkthrough')}
-            className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer ${
-              cameraMode === 'walkthrough' ? 'bg-indigo-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900 hover:bg-stone-50'
+            className={`rounded-xl px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer ${
+              cameraMode === 'walkthrough' ? 'bg-gradient-to-r from-[#D6B779] to-[#C5A25D] text-[#0F172A] font-bold shadow-xs' : 'text-slate-300 hover:text-[#F8FAFC] hover:bg-[#0F172A]'
             }`}
           >
             Eye-Level
@@ -923,13 +941,13 @@ export const SeatingPlanner3D: React.FC<SeatingPlanner3DProps> = ({ plan, onUpda
         {/* LIGHTING & FLOOR QUICK TOGGLES (TOP RIGHT) */}
         <div className="ui-dock absolute top-4 right-4 z-20 flex items-center gap-2">
           {/* Lighting Mode */}
-          <div className="flex items-center gap-1 rounded-xl border border-stone-200 bg-white/95 p-1 shadow-md backdrop-blur-md">
+          <div className="flex items-center gap-1 rounded-2xl border border-[#334155] bg-[#1E293B]/90 p-1.5 shadow-xl backdrop-blur-md">
             <button
               type="button"
               onClick={() => setLightingMode('evening')}
               title="Warm Candlelight Evening"
               className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                lightingMode === 'evening' ? 'bg-amber-50 text-amber-700' : 'text-slate-500 hover:text-slate-800'
+                lightingMode === 'evening' ? 'bg-[#D6B779] text-[#0F172A]' : 'text-slate-300 hover:text-[#F8FAFC]'
               }`}
             >
               <Flame className="h-4 w-4" />

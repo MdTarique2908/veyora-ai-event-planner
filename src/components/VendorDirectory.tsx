@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { EventPlan, VendorRecommendation, GroundedMapsPlace } from '../types/event';
+import { VenueArchitectureVisual3D } from './Luxury3DVisuals';
 
 interface VendorDirectoryProps {
   plan: EventPlan;
@@ -348,43 +349,63 @@ export const VendorDirectory: React.FC<VendorDirectoryProps> = ({ plan, onUpdate
         </div>
       )}
 
-      {/* Main View Mode Switcher */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-stone-200/80 pb-4">
-        <div>
-          <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-            <Store className="h-5 w-5 text-indigo-600" />
-            <span>Real Local Venues & Vendor Directory</span>
-          </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Discover real physical locations with Google Maps grounding, live reviews, and direct directions.
-          </p>
-        </div>
+      {/* Main Luxury 3D Venue Discovery Header */}
+      <div className="relative overflow-hidden rounded-3xl border border-[#D6B779]/35 bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0F172A] p-6 sm:p-8 shadow-2xl text-[#F8FAFC]">
+        <div className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-[#D6B779]/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-[#38BDF8]/10 blur-3xl" />
 
-        <div className="flex items-center gap-1.5 rounded-xl border border-stone-200 bg-stone-100/70 p-1">
-          <button
-            type="button"
-            onClick={() => setActiveView('maps')}
-            className={`flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-xs font-medium transition-all cursor-pointer ${
-              activeView === 'maps'
-                ? 'bg-white text-indigo-700 font-bold shadow-2xs border border-stone-200/60'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <MapPin className="h-3.5 w-3.5" />
-            <span>Google Maps Venues</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveView('benchmarks')}
-            className={`flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-xs font-medium transition-all cursor-pointer ${
-              activeView === 'benchmarks'
-                ? 'bg-white text-indigo-700 font-bold shadow-2xs border border-stone-200/60'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <ShieldCheck className="h-3.5 w-3.5" />
-            <span>Vetting & Rate Benchmarks</span>
-          </button>
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          <div className="lg:col-span-8 space-y-4">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#D6B779]/40 bg-[#D6B779]/10 px-3.5 py-1 text-xs font-semibold text-[#D6B779]">
+              <Store className="h-3.5 w-3.5 text-[#D6B779]" />
+              <span>Google Maps Grounded Discovery Engine</span>
+            </div>
+
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#F8FAFC]">
+                Real Local Venues & Vendor Directory
+              </h2>
+              <p className="mt-1 text-xs sm:text-sm text-slate-300 leading-relaxed max-w-xl">
+                Discover real physical celebration locations with Google Maps grounding, live user reviews, and direct travel coordinates in {plan.input.city}.
+              </p>
+            </div>
+
+            <div className="pt-2 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveView('maps')}
+                className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-[#D6B779] focus:outline-none ${
+                  activeView === 'maps'
+                    ? 'bg-gradient-to-r from-[#D6B779] to-[#C5A25D] text-[#0F172A] shadow-md shadow-[#D6B779]/20'
+                    : 'border border-[#334155] bg-[#0F172A]/70 text-slate-300 hover:text-[#F8FAFC] hover:border-[#D6B779]/40'
+                }`}
+              >
+                <MapPin className="h-3.5 w-3.5" />
+                <span>Google Maps Venues</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveView('benchmarks')}
+                className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-[#D6B779] focus:outline-none ${
+                  activeView === 'benchmarks'
+                    ? 'bg-gradient-to-r from-[#D6B779] to-[#C5A25D] text-[#0F172A] shadow-md shadow-[#D6B779]/20'
+                    : 'border border-[#334155] bg-[#0F172A]/70 text-slate-300 hover:text-[#F8FAFC] hover:border-[#D6B779]/40'
+                }`}
+              >
+                <ShieldCheck className="h-3.5 w-3.5" />
+                <span>Vetting & Rate Benchmarks</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="lg:col-span-4 flex items-center justify-center">
+            <div className="relative w-full rounded-2xl border border-[#334155]/60 bg-[#0F172A]/50 backdrop-blur-xs p-1 shadow-inner">
+              <VenueArchitectureVisual3D />
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[9px] text-slate-400 font-mono tracking-widest uppercase bg-[#0F172A]/90 px-2.5 py-0.5 rounded-full border border-[#334155]/60 pointer-events-none">
+                3D Architectural Pavilion
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

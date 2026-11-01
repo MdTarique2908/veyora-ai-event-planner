@@ -8,6 +8,73 @@ interface AboutModalProps {
 }
 
 export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
+  const modalRef = React.useRef<HTMLDivElement>(null);
+  const previousActiveElementRef = React.useRef<HTMLElement | null>(null);
+
+  React.useEffect(() => {
+    if (!isOpen) return;
+
+    // Save previously focused element for restoration upon close
+    previousActiveElementRef.current = document.activeElement as HTMLElement;
+
+    // Focus the first interactive element inside modal
+    const focusTimer = setTimeout(() => {
+      if (modalRef.current) {
+        const focusables = modalRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        const visibleFocusables = (Array.from(focusables) as HTMLElement[]).filter((el) => el.offsetParent !== null);
+        if (visibleFocusables.length > 0) {
+          visibleFocusables[0].focus();
+        }
+      }
+    }, 20);
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+
+      if (e.key === 'Tab' && modalRef.current) {
+        const focusables = modalRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        const visibleFocusables = (Array.from(focusables) as HTMLElement[]).filter((el) => el.offsetParent !== null);
+
+        if (visibleFocusables.length === 0) {
+          e.preventDefault();
+          return;
+        }
+
+        const firstElement = visibleFocusables[0];
+        const lastElement = visibleFocusables[visibleFocusables.length - 1];
+
+        if (e.shiftKey) {
+          if (document.activeElement === firstElement || !modalRef.current.contains(document.activeElement)) {
+            e.preventDefault();
+            lastElement.focus();
+          }
+        } else {
+          if (document.activeElement === lastElement || !modalRef.current.contains(document.activeElement)) {
+            e.preventDefault();
+            firstElement.focus();
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      clearTimeout(focusTimer);
+      window.removeEventListener('keydown', handleKeyDown);
+      if (previousActiveElementRef.current && typeof previousActiveElementRef.current.focus === 'function') {
+        previousActiveElementRef.current.focus();
+      }
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   // Md Tarique's Official Profiles
@@ -23,6 +90,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
       onClick={onClose}
     >
       <div
+        ref={modalRef}
         className="relative w-full max-w-xl overflow-hidden rounded-3xl border border-[#E8D4A8]/40 bg-[#F8F7F3] dark:bg-[#131B2B] p-6 sm:p-8 shadow-2xl transition-all"
         onClick={(e) => e.stopPropagation()}
       >
@@ -64,7 +132,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
                   Creator & Lead Engineer
                 </span>
               </div>
-              <h3 className="mt-1 text-lg font-bold text-slate-900 dark:text-slate-100">
+              <h3 id="about-modal-title" className="mt-1 text-lg font-bold text-slate-900 dark:text-slate-100">
                 Created by Md Tarique
               </h3>
               <div className="mt-1 flex items-start gap-1.5 text-xs text-slate-600 dark:text-slate-300">

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Sparkles,
   Calendar,
@@ -16,6 +16,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { EventInput, EventType, VenueType } from '../types/event';
+import { EventPlanningVisual3D } from './Luxury3DVisuals';
 
 interface EventFormProps {
   onSubmit: (input: EventInput) => Promise<void>;
@@ -32,6 +33,13 @@ const EVENT_TYPES: { value: EventType; label: string; icon: string }[] = [
   { value: 'baby_shower', label: 'Baby Shower', icon: '🍼' },
   { value: 'corporate', label: 'Corporate / Team Event', icon: '💼' },
   { value: 'other', label: 'Other Special Event', icon: '✨' },
+];
+
+const VENUE_OPTIONS: { value: VenueType; label: string; desc: string }[] = [
+  { value: 'indoor', label: 'Indoor Hall / Loft', desc: 'Climate controlled' },
+  { value: 'outdoor', label: 'Outdoor / Garden', desc: 'Fresh air & open sky' },
+  { value: 'hybrid', label: 'Hybrid Space', desc: 'Indoor lounge + patio' },
+  { value: 'any', label: 'No Preference', desc: 'Flexible options' },
 ];
 
 const CURRENCIES = [
@@ -92,6 +100,52 @@ export const EventForm: React.FC<EventFormProps> = ({
   const [customDiet, setCustomDiet] = useState('');
   const [venuePreference, setVenuePreference] = useState<VenueType>('hybrid');
   const [specialRequirements, setSpecialRequirements] = useState('');
+
+  // Roving Tabindex & Arrow Key Navigation Refs
+  const eventTypeRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const venueRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  const handleEventTypeKeyDown = (e: React.KeyboardEvent, index: number) => {
+    let nextIndex = -1;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      nextIndex = (index + 1) % EVENT_TYPES.length;
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      nextIndex = (index - 1 + EVENT_TYPES.length) % EVENT_TYPES.length;
+    } else if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      setEventType(EVENT_TYPES[index].value);
+      return;
+    }
+
+    if (nextIndex >= 0) {
+      const nextType = EVENT_TYPES[nextIndex];
+      setEventType(nextType.value);
+      eventTypeRefs.current[nextIndex]?.focus();
+    }
+  };
+
+  const handleVenueKeyDown = (e: React.KeyboardEvent, index: number) => {
+    let nextIndex = -1;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      nextIndex = (index + 1) % VENUE_OPTIONS.length;
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      nextIndex = (index - 1 + VENUE_OPTIONS.length) % VENUE_OPTIONS.length;
+    } else if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      setVenuePreference(VENUE_OPTIONS[index].value);
+      return;
+    }
+
+    if (nextIndex >= 0) {
+      const nextVenue = VENUE_OPTIONS[nextIndex];
+      setVenuePreference(nextVenue.value);
+      venueRefs.current[nextIndex]?.focus();
+    }
+  };
 
   // Validation Errors
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -186,39 +240,49 @@ export const EventForm: React.FC<EventFormProps> = ({
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-      {/* Header & Sample Loaders */}
-      <div className="mb-8 rounded-2xl border border-stone-200/90 bg-white p-6 shadow-xs sm:p-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#E8D4A8]/60 bg-[#FAF6ED] dark:bg-[#1E2B45] px-3.5 py-1 text-xs font-semibold text-[#8C6D2C] dark:text-[#E8D4A8]">
-              <Sparkles className="h-3.5 w-3.5 text-[#C5A869]" />
+      {/* Header & Sample Loaders with Luxury 3D Visualizer */}
+      <div className="mb-8 relative overflow-hidden rounded-3xl border border-[#D6B779]/35 bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0F172A] p-6 sm:p-8 shadow-2xl text-[#F8FAFC]">
+        <div className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-[#D6B779]/10 blur-3xl" />
+        <div className="relative z-10 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+          <div className="md:col-span-8 space-y-3">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#D6B779]/40 bg-[#D6B779]/10 px-3.5 py-1 text-xs font-semibold text-[#D6B779]">
+              <Sparkles className="h-3.5 w-3.5 text-[#D6B779]" />
               <span>Veyora AI Event Architect</span>
             </div>
-            <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            <h1 className="text-2xl font-bold tracking-tight text-[#F8FAFC] sm:text-3xl">
               Create Your Tailored Event Plan
             </h1>
-            <p className="mt-1 text-sm text-slate-600">
-              Enter your event specifications below to generate an intelligent itemized budget, timeline, and vendor guide.
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-xl">
+              Enter your event specifications below to generate an intelligent itemized budget, interactive 3D seating, and vendor guide.
             </p>
+
+            {/* Quick Demo Preloads */}
+            <div className="pt-2 flex flex-wrap items-center gap-2">
+              <span className="text-xs font-medium text-slate-400">Quick Demo:</span>
+              <button
+                type="button"
+                onClick={() => onLoadSample('sample-plan-birthday-1')}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[#334155] bg-[#0F172A]/70 px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-[#D6B779] hover:border-[#D6B779]/40 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-[#D6B779] focus:outline-none"
+              >
+                🎂 21st Rooftop Bash
+              </button>
+              <button
+                type="button"
+                onClick={() => onLoadSample('sample-plan-wedding-2')}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[#334155] bg-[#0F172A]/70 px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-[#D6B779] hover:border-[#D6B779]/40 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-[#D6B779] focus:outline-none"
+              >
+                💍 Garden Wedding
+              </button>
+            </div>
           </div>
 
-          {/* Quick Demo Preloads */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium text-slate-500">Quick Demo:</span>
-            <button
-              type="button"
-              onClick={() => onLoadSample('sample-plan-birthday-1')}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-indigo-300 hover:bg-white hover:text-indigo-600 transition-all cursor-pointer shadow-2xs"
-            >
-              🎂 21st Rooftop Bash
-            </button>
-            <button
-              type="button"
-              onClick={() => onLoadSample('sample-plan-wedding-2')}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-indigo-300 hover:bg-white hover:text-indigo-600 transition-all cursor-pointer shadow-2xs"
-            >
-              💍 Garden Wedding
-            </button>
+          <div className="md:col-span-4 flex items-center justify-center">
+            <div className="relative w-full rounded-2xl border border-[#334155]/60 bg-[#0F172A]/50 backdrop-blur-xs p-1 shadow-inner">
+              <EventPlanningVisual3D className="!h-[180px] sm:!h-[200px]" />
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[9px] text-slate-400 font-mono tracking-widest uppercase bg-[#0F172A]/90 px-2.5 py-0.5 rounded-full border border-[#334155]/60 pointer-events-none">
+                3D Stage Concept
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -240,10 +304,12 @@ export const EventForm: React.FC<EventFormProps> = ({
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             {/* Event Title */}
             <div className="sm:col-span-2">
-              <label className="block text-xs font-semibold text-slate-700">
+              <label htmlFor="event-title" className="block text-xs font-semibold text-slate-700">
                 Event Name / Working Title <span className="text-rose-500">*</span>
               </label>
               <input
+                id="event-title"
+                name="eventTitle"
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -267,26 +333,37 @@ export const EventForm: React.FC<EventFormProps> = ({
               <label className="block text-xs font-semibold text-slate-700 mb-2">
                 Celebration Category <span className="text-rose-500">*</span>
               </label>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {EVENT_TYPES.map((type) => (
-                  <button
-                    key={type.value}
-                    type="button"
-                    onClick={() => setEventType(type.value)}
-                    className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-xs font-medium transition-all cursor-pointer ${
-                      eventType === type.value
-                        ? 'border-indigo-600 bg-indigo-50/80 text-indigo-900 font-bold shadow-2xs'
-                        : 'border-stone-200 bg-stone-50/60 text-slate-700 hover:border-indigo-200 hover:bg-white'
-                    }`}
-                  >
-                    <span className="text-base">{type.icon}</span>
-                    <span className="truncate">{type.label}</span>
-                  </button>
-                ))}
+              <div role="radiogroup" aria-label="Celebration Category" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {EVENT_TYPES.map((type, idx) => {
+                  const isSelected = eventType === type.value;
+                  const isCurrentOrFirst = isSelected || (!EVENT_TYPES.some((t) => t.value === eventType) && idx === 0);
+                  return (
+                    <button
+                      key={type.value}
+                      ref={(el) => { eventTypeRefs.current[idx] = el; }}
+                      type="button"
+                      role="radio"
+                      aria-checked={isSelected}
+                      tabIndex={isCurrentOrFirst ? 0 : -1}
+                      onKeyDown={(e) => handleEventTypeKeyDown(e, idx)}
+                      onClick={() => setEventType(type.value)}
+                      className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-xs font-medium transition-all cursor-pointer ${
+                        eventType === type.value
+                          ? 'border-indigo-600 bg-indigo-50/80 text-indigo-900 font-bold shadow-2xs'
+                          : 'border-stone-200 bg-stone-50/60 text-slate-700 hover:border-indigo-200 hover:bg-white'
+                      }`}
+                    >
+                      <span className="text-base">{type.icon}</span>
+                      <span className="truncate">{type.label}</span>
+                    </button>
+                  );
+                })}
               </div>
 
               {eventType === 'other' && (
                 <input
+                  id="custom-event-type"
+                  aria-label="Custom celebration category"
                   type="text"
                   value={customEventType}
                   onChange={(e) => setCustomEventType(e.target.value)}
@@ -298,11 +375,13 @@ export const EventForm: React.FC<EventFormProps> = ({
 
             {/* Date */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700">
+              <label htmlFor="event-date" className="block text-xs font-semibold text-slate-700">
                 Target Celebration Date <span className="text-rose-500">*</span>
               </label>
               <div className="relative mt-1.5">
                 <input
+                  id="event-date"
+                  name="eventDate"
                   type="date"
                   value={eventDate}
                   onChange={(e) => setEventDate(e.target.value)}
@@ -324,11 +403,13 @@ export const EventForm: React.FC<EventFormProps> = ({
 
             {/* City / Location */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700">
+              <label htmlFor="event-city" className="block text-xs font-semibold text-slate-700">
                 City / Region <span className="text-rose-500">*</span>
               </label>
               <div className="relative mt-1.5">
                 <input
+                  id="event-city"
+                  name="eventCity"
                   type="text"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
@@ -367,7 +448,7 @@ export const EventForm: React.FC<EventFormProps> = ({
             {/* Guest Count */}
             <div>
               <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-slate-700">
+                <label htmlFor="guest-count" className="text-xs font-semibold text-slate-700">
                   Estimated Guests <span className="text-rose-500">*</span>
                 </label>
                 <span className="font-mono text-sm font-bold text-indigo-700">
@@ -376,6 +457,8 @@ export const EventForm: React.FC<EventFormProps> = ({
               </div>
               <div className="mt-2">
                 <input
+                  id="guest-count"
+                  aria-label="Estimated guest count"
                   type="range"
                   min="5"
                   max="500"
@@ -411,12 +494,14 @@ export const EventForm: React.FC<EventFormProps> = ({
 
             {/* Total Budget & Currency */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700">
+              <label htmlFor="total-budget" className="block text-xs font-semibold text-slate-700">
                 Total Target Budget <span className="text-rose-500">*</span>
               </label>
               <div className="mt-1.5 flex gap-2">
                 {/* Currency select */}
                 <select
+                  id="budget-currency"
+                  aria-label="Target budget currency"
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value)}
                   className="w-24 rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-xs font-medium text-slate-900 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 focus:outline-none shadow-2xs"
@@ -431,6 +516,8 @@ export const EventForm: React.FC<EventFormProps> = ({
                 {/* Amount input */}
                 <div className="relative flex-1">
                   <input
+                    id="total-budget"
+                    name="totalBudget"
                     type="number"
                     min="50"
                     step="50"
@@ -528,6 +615,8 @@ export const EventForm: React.FC<EventFormProps> = ({
                 ))}
               </div>
               <input
+                id="custom-theme"
+                aria-label="Custom theme or atmosphere style"
                 type="text"
                 value={customTheme}
                 onChange={(e) => setCustomTheme(e.target.value)}
@@ -541,27 +630,31 @@ export const EventForm: React.FC<EventFormProps> = ({
               <label className="block text-xs font-semibold text-slate-700 mb-2">
                 Venue Preference
               </label>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {[
-                  { value: 'indoor' as VenueType, label: 'Indoor Hall / Loft', desc: 'Climate controlled' },
-                  { value: 'outdoor' as VenueType, label: 'Outdoor / Garden', desc: 'Fresh air & open sky' },
-                  { value: 'hybrid' as VenueType, label: 'Hybrid Space', desc: 'Indoor lounge + patio' },
-                  { value: 'any' as VenueType, label: 'No Preference', desc: 'Flexible options' },
-                ].map((venue) => (
-                  <button
-                    key={venue.value}
-                    type="button"
-                    onClick={() => setVenuePreference(venue.value)}
-                    className={`rounded-xl border p-3 text-left transition-all cursor-pointer ${
-                      venuePreference === venue.value
-                        ? 'border-indigo-600 bg-indigo-50/80 text-indigo-950 font-semibold shadow-2xs'
-                        : 'border-stone-200 bg-stone-50/60 text-slate-700 hover:border-indigo-200 hover:bg-white'
-                    }`}
-                  >
-                    <div className="text-xs font-semibold">{venue.label}</div>
-                    <div className="mt-0.5 text-[11px] text-slate-500">{venue.desc}</div>
-                  </button>
-                ))}
+              <div role="radiogroup" aria-label="Venue Preference" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {VENUE_OPTIONS.map((venue, idx) => {
+                  const isSelected = venuePreference === venue.value;
+                  const isCurrentOrFirst = isSelected || (!VENUE_OPTIONS.some((v) => v.value === venuePreference) && idx === 0);
+                  return (
+                    <button
+                      key={venue.value}
+                      ref={(el) => { venueRefs.current[idx] = el; }}
+                      type="button"
+                      role="radio"
+                      aria-checked={isSelected}
+                      tabIndex={isCurrentOrFirst ? 0 : -1}
+                      onKeyDown={(e) => handleVenueKeyDown(e, idx)}
+                      onClick={() => setVenuePreference(venue.value)}
+                      className={`rounded-xl border p-3 text-left transition-all cursor-pointer ${
+                        venuePreference === venue.value
+                          ? 'border-indigo-600 bg-indigo-50/80 text-indigo-950 font-semibold shadow-2xs'
+                          : 'border-stone-200 bg-stone-50/60 text-slate-700 hover:border-indigo-200 hover:bg-white'
+                      }`}
+                    >
+                      <div className="text-xs font-semibold">{venue.label}</div>
+                      <div className="mt-0.5 text-[11px] text-slate-500">{venue.desc}</div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -588,6 +681,8 @@ export const EventForm: React.FC<EventFormProps> = ({
                 ))}
               </div>
               <input
+                id="custom-diet"
+                aria-label="Additional dietary notes"
                 type="text"
                 value={customDiet}
                 onChange={(e) => setCustomDiet(e.target.value)}
@@ -598,10 +693,11 @@ export const EventForm: React.FC<EventFormProps> = ({
 
             {/* Special Requirements */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label htmlFor="special-requirements" className="block text-xs font-semibold text-slate-700 mb-1">
                 Special Requirements & Wishlist (Optional)
               </label>
               <textarea
+                id="special-requirements"
                 rows={3}
                 value={specialRequirements}
                 onChange={(e) => setSpecialRequirements(e.target.value)}

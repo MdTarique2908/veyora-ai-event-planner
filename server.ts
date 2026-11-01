@@ -301,7 +301,7 @@ function generateResilientFallbackPlan(input: EventInput): EventPlan {
 app.post('/api/plan/generate', async (req: Request, res: Response) => {
   const input: EventInput = req.body;
 
-  if (!input || !input.title || !input.eventType || !input.city) {
+  if (!input || typeof input.title !== 'string' || !input.title.trim() || typeof input.eventType !== 'string' || !input.eventType.trim() || typeof input.city !== 'string' || !input.city.trim()) {
     res.status(400).json({ error: 'Missing required event fields (title, eventType, city).' });
     return;
   }
@@ -468,7 +468,7 @@ Return ONLY raw JSON matching this structure (no markdown fences, no explanatory
 app.post('/api/plan/ask-assistant', async (req: Request, res: Response) => {
   const { question, planContext } = req.body;
 
-  if (!question) {
+  if (!question || typeof question !== 'string' || !question.trim()) {
     res.status(400).json({ error: 'Question is required' });
     return;
   }
@@ -520,8 +520,8 @@ Provide a clear, helpful, friendly, and highly actionable response formatted wit
 app.post('/api/plan/reallocate', async (req: Request, res: Response) => {
   const { items, totalBudget, currency, eventDetails } = req.body;
 
-  if (!Array.isArray(items) || !totalBudget) {
-    res.status(400).json({ error: 'Missing items or totalBudget' });
+  if (!Array.isArray(items) || !totalBudget || isNaN(Number(totalBudget)) || Number(totalBudget) <= 0) {
+    res.status(400).json({ error: 'Missing or invalid items or totalBudget (totalBudget must be a positive number)' });
     return;
   }
 
@@ -837,7 +837,7 @@ app.post('/api/venues/search-maps', async (req: Request, res: Response) => {
     latLng,
   } = req.body;
 
-  if (!city || typeof city !== 'string') {
+  if (!city || typeof city !== 'string' || !city.trim()) {
     res.status(400).json({ error: 'City is required for Google Maps venue search.' });
     return;
   }
@@ -1583,60 +1583,52 @@ app.post('/api/music/generate', async (req: Request, res: Response) => {
     const targetChunks = Math.max(2, Math.min(8, Math.ceil(durationSeconds / 2.66)));
     const audioChunks: Buffer[] = [];
     let session: any = null;
+    let setupCompleteReceived = false;
+    let isConfiguring = false;
+    let isPlayingStarted = false;
+    let isSettled = false;
+    let timeoutId: NodeJS.Timeout | null = null;
 
     const audioPromise = new Promise<Buffer>((resolve, reject) => {
-      const timeoutId = setTimeout(() => {
+      const cleanup = () => {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
         if (session) {
           try {
             session.stop();
           } catch {}
+          try {
+            session.close();
+          } catch {}
+          session = null;
         }
-        if (audioChunks.length > 0) {
-          resolve(Buffer.concat(audioChunks));
-        } else {
-          reject(new Error('Lyria audio generation timed out after 16 seconds'));
+      };
+
+      // 30-second comprehensive generation timeout covering entire lifecycle
+      timeoutId = setTimeout(() => {
+        if (!isSettled) {
+          isSettled = true;
+          const hasAudio = audioChunks.length > 0;
+          const combined = hasAudio ? Buffer.concat(audioChunks) : null;
+          cleanup();
+          if (hasAudio && combined) {
+            resolve(combined);
+          } else {
+            reject(new Error('Lyria audio generation timed out after 30 seconds'));
+          }
         }
-      }, 16000);
+      }, 30000);
 
-      ai.live.music
-        .connect({
-          model: 'models/lyria-realtime-exp',
-          callbacks: {
-            onmessage: (msg: any) => {
-              if (msg.serverContent?.audioChunks) {
-                for (const chunk of msg.serverContent.audioChunks) {
-                  if (chunk.data) {
-                    audioChunks.push(Buffer.from(chunk.data, 'base64'));
-                  }
-                }
+      // Safe initialization routine: executes ONLY once both session & setupComplete are confirmed
+      const initializeAndPlay = async () => {
+        if (!session || !setupCompleteReceived || isConfiguring || isSettled) {
+          return;
+        }
+        isConfiguring = true;
 
-                if (audioChunks.length >= targetChunks) {
-                  clearTimeout(timeoutId);
-                  try {
-                    session.stop();
-                  } catch {}
-                  resolve(Buffer.concat(audioChunks));
-                }
-              }
-            },
-            onerror: (err: any) => {
-              console.error('[Lyria Music] Realtime session error:', err);
-              clearTimeout(timeoutId);
-              reject(err);
-            },
-            onclose: () => {
-              clearTimeout(timeoutId);
-              if (audioChunks.length > 0) {
-                resolve(Buffer.concat(audioChunks));
-              } else {
-                reject(new Error('Lyria session closed before audio arrived'));
-              }
-            },
-          },
-        })
-        .then(async (liveSession) => {
-          session = liveSession;
-
+        try {
           await session.setMusicGenerationConfig({
             musicGenerationConfig: {
               bpm: Number(bpm) || 110,
@@ -1645,15 +1637,106 @@ app.post('/api/music/generate', async (req: Request, res: Response) => {
             },
           });
 
+          if (isSettled) return;
+
           await session.setWeightedPrompts({
             weightedPrompts: [{ text: fullPromptText, weight: 1.0 }],
           });
 
-          session.play();
+          if (isSettled) return;
+
+          if (!isPlayingStarted) {
+            isPlayingStarted = true;
+            session.play();
+          }
+        } catch (initErr) {
+          if (!isSettled) {
+            isSettled = true;
+            cleanup();
+            reject(initErr);
+          }
+        }
+      };
+
+      ai.live.music
+        .connect({
+          model: 'models/lyria-realtime-exp',
+          callbacks: {
+            onmessage: (msg: any) => {
+              if (isSettled) return;
+
+              // Confirm setup completion per Google LiveMusicServerMessage contract
+              if (msg?.setupComplete !== undefined) {
+                setupCompleteReceived = true;
+                initializeAndPlay().catch((err) => {
+                  if (!isSettled) {
+                    isSettled = true;
+                    cleanup();
+                    reject(err);
+                  }
+                });
+              }
+
+              if (msg?.serverContent?.audioChunks) {
+                for (const chunk of msg.serverContent.audioChunks) {
+                  if (chunk.data) {
+                    audioChunks.push(Buffer.from(chunk.data, 'base64'));
+                  }
+                }
+
+                if (audioChunks.length >= targetChunks) {
+                  isSettled = true;
+                  const combined = Buffer.concat(audioChunks);
+                  cleanup();
+                  resolve(combined);
+                }
+              }
+            },
+            onerror: (err: any) => {
+              console.error('[Lyria Music] Realtime session error:', err);
+              if (!isSettled) {
+                isSettled = true;
+                cleanup();
+                reject(err);
+              }
+            },
+            onclose: () => {
+              if (!isSettled) {
+                isSettled = true;
+                cleanup();
+                if (audioChunks.length > 0) {
+                  resolve(Buffer.concat(audioChunks));
+                } else {
+                  reject(new Error('Lyria session closed before audio arrived'));
+                }
+              }
+            },
+          },
+        })
+        .then((liveSession) => {
+          if (isSettled) {
+            try {
+              liveSession.stop();
+              liveSession.close();
+            } catch {}
+            return;
+          }
+          session = liveSession;
+          // In case setupComplete arrived before connect() resolved
+          initializeAndPlay().catch((err) => {
+            if (!isSettled) {
+              isSettled = true;
+              cleanup();
+              reject(err);
+            }
+          });
         })
         .catch((err) => {
-          clearTimeout(timeoutId);
-          reject(err);
+          if (!isSettled) {
+            isSettled = true;
+            cleanup();
+            reject(err);
+          }
         });
     });
 

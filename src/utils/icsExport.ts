@@ -211,7 +211,7 @@ export function generateEventPlanIcs(
         'BEGIN:VALARM',
         'ACTION:DISPLAY',
         `DESCRIPTION:Reminder: ${escapeIcsText(plan.concept.title)} is tomorrow!`,
-        `-TRIGGER:-PT${alarmMinutesBefore}M`,
+        `TRIGGER:-PT${alarmMinutesBefore}M`,
         'END:VALARM'
       );
     }
